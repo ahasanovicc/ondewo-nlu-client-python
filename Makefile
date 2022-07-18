@@ -43,6 +43,10 @@ release: ## Automate the entire release process
 update_setup: ## Update NLU Version in setup.py
 	@sed -i "s/version='[0-9]*.[0-9]*.[0-9]*'/version='${ONDEWO_NLU_VERSION}'/g" setup.py
 
+create_release_branch:
+	git checkout -b "release/${ONDEWO_NLU_VERSION}"
+	git push -u origin "release/${ONDEWO_NLU_VERSION}"
+
 build_and_push_to_pypi_via_docker: build build_utils_docker_image push_to_pypi_via_docker_image  ## Release automation for building and pushing to pypi via a docker image
 
 build_and_release_to_github_via_docker: build build_utils_docker_image release_to_github_via_docker_image  ## Release automation for building and releasing on GitHub via a docker image
