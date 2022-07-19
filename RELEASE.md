@@ -2,6 +2,19 @@
 
 *****************
 
+## Release ONDEWO NLU Python Client 2.8.6
+
+### Bugfix
+
+* Some changes were made
+* Some changes were made
+* Some changes were made
+* Some changes were made
+* Some changes were made
+* Some changes were made
+
+*****************
+
 ## Release ONDEWO NLU Python Client 2.8.5
 
 ### Bugfix

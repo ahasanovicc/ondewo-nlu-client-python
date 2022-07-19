@@ -1,5 +1,6 @@
 include ./envs/versions.env
 export
+export GH_TOKEN=
 # Fully automated build and deploy process for ondewo-nlu-client-python
 #
 # Step 1: Configure bellow the versions for build
@@ -7,10 +8,11 @@ export
 # Step 3: Execute "make build_and_push_to_pypi_via_docker"
 # Step 4 (Github Release): Execute "make build_and_release_to_github_via_docker"
 
-CURRENT_RELEASE_NOTES=`cat RELEASE.md | grep -A 6 'Release ONDEWO' | head -6`
+CURRENT_RELEASE_NOTES=`cat RELEASE.md \
+	| sed -n '/Release ONDEWO NLU Python Client ${ONDEWO_NLU_VERSION}/,/\*\*/p'`
 
 # Choose repo to release to - Example: "https://github.com/ondewo/ondewo-nlu-client-python"
-GH_REPO="https://github.com/ondewo/ondewo-nlu-client-python"
+GH_REPO="https://github.com/ahasanovicc/ondewo-nlu-client-python"
 
 # Submodule paths
 ONDEWO_NLU_API_DIR=ondewo-nlu-api
@@ -31,6 +33,10 @@ IMAGE_UTILS_NAME=ondewo-nlu-client-utils-python:${ONDEWO_NLU_VERSION}
 help:  ## Print usage info about help targets
 	@grep -E '(^[a-zA-Z_-]+:.*?##.*$$)|(^##)' Makefile | awk 'BEGIN {FS = ":.*?## "}{printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
 
+# BEFORE "release"
+update_setup: ## Update NLU Version in setup.py
+	@sed -i "s/version='[0-9]*.[0-9]*.[0-9]*'/version='${ONDEWO_NLU_VERSION}'/g" setup.py
+
 # Release Process Steps:
 # 1 - Create Release Branch and push
 # 2 - Create Release Tag and push
@@ -38,24 +44,25 @@ help:  ## Print usage info about help targets
 # 3 - PyPI Release
 release: ## Automate the entire release process
 	@echo "Release Automation started"
-	update_setup
 
-update_setup: ## Update NLU Version in setup.py
-	@sed -i "s/version='[0-9]*.[0-9]*.[0-9]*'/version='${ONDEWO_NLU_VERSION}'/g" setup.py
 
 create_release_branch:
 	git checkout -b "release/${ONDEWO_NLU_VERSION}"
 	git push -u origin "release/${ONDEWO_NLU_VERSION}"
+
+create_release_tag:
+	git tag -a ${ONDEWO_NLU_VERSION} -m "release/${ONDEWO_NLU_VERSION}"
+	git push origin ${ONDEWO_NLU_VERSION}
 
 build_and_push_to_pypi_via_docker: build build_utils_docker_image push_to_pypi_via_docker_image  ## Release automation for building and pushing to pypi via a docker image
 
 build_and_release_to_github_via_docker: build build_utils_docker_image release_to_github_via_docker_image  ## Release automation for building and releasing on GitHub via a docker image
 
 login_to_gh: ## Login to Github CLI with Access Token
-	echo $(GH_TOKEN) | gh auth login -p ssh --with-token
+	echo $(GITHUB_GH_TOKEN) | gh auth login -p ssh --with-token
 
 build_gh_release: ## Generate Github Release with CLI
-	gh release create --repo "$(GH_REPO)" "$(CURRENT_RELEASE_TAG)" -n "$(CURRENT_RELEASE_NOTES)" -t "Release ${"$(CURRENT_RELEASE_TAG)"}"
+	gh release create --repo $(GH_REPO) "$(ONDEWO_NLU_VERSION)" -n "$(CURRENT_RELEASE_NOTES)" -t "Release ${ONDEWO_NLU_VERSION}"
 
 build: clear_package_data init_submodules checkout_defined_submodule_versions build_compiler generate_ondewo_protos  ## Build source code
 
